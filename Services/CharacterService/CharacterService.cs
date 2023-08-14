@@ -53,7 +53,11 @@ namespace dotnet_rpg.Services.CharacterService
                 var character = characters.FirstOrDefault(c => c.Id == updatedCharacter.Id);
 
                 if (character == null)  
-                throw new Exception("Charecter with Id '"+updatedCharacter.Id+"' not found.");
+                    throw new Exception("Charecter with Id '"+updatedCharacter.Id+"' not found.");
+
+                //_mapper.Map<Character>(updatedCharacter);
+                _mapper.Map(updatedCharacter,character);
+
                 character.Name = updatedCharacter.Name;
                 character.HitPoints = updatedCharacter.HitPoints;
                 character.Strength = updatedCharacter.Strength;
