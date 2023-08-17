@@ -9,10 +9,7 @@ namespace dotnet_rpg.Services.CharacterService
 {
     public class CharacterService : ICharacterService
     {
-        private static List<Character>  characters = new List<Character>{
-            new Character(),
-            new Character{Id=1 ,Name="Sam"} 
-        };
+
         private readonly IMapper _mapper;
         private readonly DataContext _context;
 
@@ -38,14 +35,16 @@ namespace dotnet_rpg.Services.CharacterService
             var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
             try
             {
-                var character = characters.FirstOrDefault(c => c.Id == id);
+                var character = _context.Characters.FirstOrDefault(c => c.Id == id);
 
                 if (character == null)  
                     throw new Exception("Charecter with Id '"+id+"' not found.");
 
-                characters.Remove(character);
+                _context.Characters.Remove(character);
+
+                await _context.SaveChangesAsync();
                 
-                serviceResponse.Data = characters.Select(c=>_mapper.Map<GetCharacterDto>(c)).ToList();
+                serviceResponse.Data = _context.Characters.Select(c=>_mapper.Map<GetCharacterDto>(c)).ToList();
             } 
             catch(Exception ex)
             {
