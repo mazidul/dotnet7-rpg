@@ -1,15 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.IdentityModel.Tokens;
 
 namespace dotnet_rpg.Data
 {
     public class AuthRepository : IAuthRepository
     {
         public readonly DataContext _context;
-        public AuthRepository(DataContext context)
+        public readonly IConfiguration _Configuration;
+        public AuthRepository(DataContext context, IConfiguration configuration)
         {
+            _Configuration = configuration;
             _context = context;
         }
 
@@ -30,7 +35,7 @@ namespace dotnet_rpg.Data
             }
             else 
             {
-                response.Data = user.Id.ToString();
+                response.Data = CreateToken(user);
             }
 
             return response;
@@ -85,6 +90,36 @@ namespace dotnet_rpg.Data
                 var computeHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
                 return computeHash.SequenceEqual(passwordHash);
             }
+        }
+
+        private string CreateToken (User user)
+        {
+            var claims = new List<Claim> 
+            { 
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username)
+            };
+
+            var appSettingsToken = _Configuration.GetSection("AppSettings:Token").Value;
+            if (appSettingsToken is null)
+                throw new Exception("AppSettings Token is null");
+
+            SymmetricSecurityKey key =  new SymmetricSecurityKey(System.Text.Encoding.UTF8
+                .GetBytes(appSettingsToken));
+
+            SigningCredentials cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddDays(1),
+                SigningCredentials = cred
+            };
+
+            JwtSecurityTokenHandler tokenHandeler = new JwtSecurityTokenHandler();
+            SecurityToken token = tokenHandeler.CreateToken(tokenDescriptor);
+
+            return tokenHandeler.WriteToken(token);
         }
     }
 }
