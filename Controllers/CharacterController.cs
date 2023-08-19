@@ -22,7 +22,7 @@ namespace dotnet_rpg.Controllers
 
         public CharacterController(ICharacterService characterService)
         {
-            this._characterService = characterService;
+            _characterService = characterService;
         }
 
         [HttpGet("GetAll")] 
