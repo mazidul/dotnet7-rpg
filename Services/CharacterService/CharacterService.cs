@@ -89,9 +89,11 @@ namespace dotnet_rpg.Services.CharacterService
             var serviceResponse = new ServiceResponse<GetCharacterDto>();
             try
             {                
-                var character = _context.Characters.FirstOrDefault(c => c.Id == updatedCharacter.Id);
+                var character = _context.Characters
+                .Include(c => c.User)
+                    .FirstOrDefault(c => c.Id == updatedCharacter.Id);
 
-                if (character == null)  
+                if (character == null || character.User!.Id != GetUserID())  
                     throw new Exception("Charecter with Id '"+updatedCharacter.Id+"' not found.");
 
                 //_mapper.Map<Character>(updatedCharacter);
